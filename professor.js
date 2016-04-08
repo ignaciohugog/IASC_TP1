@@ -2,12 +2,19 @@
  * Created by Ignacio on 3/29/16.
  */
 
-
+//imports
 var express = require('express');
-var app = express();
-var request = require('request');
 var bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded({ extended: false }));
+var request = require('request');
+
+//creates professor server
+var professorApp = express();
+professorApp.use(bodyParser.urlencoded({ extended: false }));
+
+//listen
+professorApp.listen(8003, function () {
+    console.log('Proffesor listening on port 8083!');
+});
 
 request.post(
     'http://localhost:8081/registrarse',
@@ -22,7 +29,7 @@ request.post(
     }
 );
 
-app.post('/recibir', function (req, res) {
+professorApp.post('/recibir', function (req, res) {
     
     var pregunta = req.body;
     request.post(
@@ -43,12 +50,10 @@ app.post('/recibir', function (req, res) {
     res.send('ok');
 })
 
-app.post('/recibirRespuesta', function (req, res) {
+professorApp.post('/recibirRespuesta', function (req, res) {
     console.log(req.body);
     res.send('ok');
 })
 
 
-app.listen(8003, function () {
-    console.log('Profesor app listening on port 8083!');
-});
+

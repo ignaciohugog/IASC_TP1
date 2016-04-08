@@ -1,56 +1,54 @@
 /**
  * Created by Ignacio on 3/29/16.
  */
+
+//imports
 var express = require('express');
-var app = express();
 var bodyParser = require('body-parser');
-
-
-var alumnos = [];
-var profesores = [];
-var preguntas = [];
-
-app.use(bodyParser.urlencoded({ extended: false }));
-
-
 var request = require('request');
 
+//create mailingList server
+var mailingList = express();
 
-//listening
-app.listen(8081, function () {
-    console.log('Example app listening on port 8081!');
+//holds data
+var students = [];
+var proffesors = [];
+var questions = [];
+
+//listen
+mailingList.listen(8081, function () {
+    console.log('mailingList listening on port 8081!');
 });
 
-app.post('/preguntar', function (req, res) {
-
+mailingList.post('/preguntar', function (req, res) {
     var pregunta = {
         titulo: req.body.titulo,
         mensaje: req.body.mensaje,
         alumno: req.body.sender,
-        id: preguntas.length
+        id: questions.length
     };
 
-    preguntas.push(pregunta);
+    questions.push(pregunta);
 
-    if (alumnos.indexOf(req.body.sender)===-1){
-        alumnos.push(req.body.sender);
+    if (students.indexOf(req.body.sender)===-1){
+        students.push(req.body.sender);
     }
 
-    notificar(pregunta, alumnos.concat(profesores));
+    notificar(pregunta, students.concat(proffesors));
 
     res.send('[Server] preguntar');
 });
 
-app.post('/responder', function (req, res) {
+mailingList.post('/responder', function (req, res) {
 
-    notificar(req.body, alumnos);
+    notificar(req.body, students);
     notificarRespuesta(req.body)
     res.send('[Server] Responder ok');
 });
 
 function notificarRespuesta(respuesta){
     
-        profesores.forEach(function (notificado) {
+        proffesors.forEach(function (notificado) {
             request.post(
                 'http://localhost:'+notificado+'/recibirRespuesta',
                 { form: {
@@ -70,12 +68,12 @@ function notificarRespuesta(respuesta){
 }
 
 
-app.post('/registrarse', function (req, res) {
+mailingList.post('/registrarse', function (req, res) {
 
-    if (profesores.indexOf(req.body.sender)===-1){
-        profesores.push(req.body.sender);
+    if (proffesors.indexOf(req.body.sender)===-1){
+        proffesors.push(req.body.sender);
     }
-    console.log(profesores);
+    console.log(proffesors);
     res.send('[Server] registrarse');
 });
 
@@ -103,11 +101,11 @@ function notificar (pregunta, notificados) {
 
 //
 //
-// app.get('/index.html', function (req, res) {
+// professorApp.get('/index.html', function (req, res) {
 //     res.sendFile( __dirname + "/" + "index.html" );
 // })
 //
-// app.post('/process_post', urlencodedParser, function (req, res) {
+// professorApp.post('/process_post', urlencodedParser, function (req, res) {
 //
 //     // Prepare output in JSON format
 //     response = {
