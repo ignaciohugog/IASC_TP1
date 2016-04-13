@@ -1,80 +1,94 @@
 /**
  * Created by Ignacio on 3/29/16.
  */
-
-//imports
+/**
+ * Created by Ignacio on 3/29/16.
+ */
 var express = require('express');
+var app = express();
 var bodyParser = require('body-parser');
+
+
+var alumnos = [];
+var profesores = [];
+var preguntas = [];
+
+app.use(bodyParser.urlencoded({ extended: false }));
+
+
 var request = require('request');
 
-//create mailingList server
-var mailingList = express();
 
-//holds data
-var students = [];
-var proffesors = [];
-var questions = [];
-
-//listen
-mailingList.listen(8081, function () {
-    console.log('mailingList listening on port 8081!');
+//listening
+app.listen(8081, function () {
+    console.log('Example app listening on port 8081!');
 });
 
-mailingList.post('/preguntar', function (req, res) {
+app.post('/preguntar', function (req, res) {
     var pregunta = {
         titulo: req.body.titulo,
         mensaje: req.body.mensaje,
         alumno: req.body.sender,
-        id: questions.length
+        id: preguntas.length
     };
 
-    questions.push(pregunta);
+    preguntas.push(pregunta);
 
-    if (students.indexOf(req.body.sender)===-1){
-        students.push(req.body.sender);
+    if (alumnos.indexOf(req.body.sender)===-1){
+        alumnos.push(req.body.sender);
     }
 
-    notificar(pregunta, students.concat(proffesors));
+    notificar(pregunta, alumnos.concat(profesores));
 
     res.send('[Server] preguntar');
 });
 
-mailingList.post('/responder', function (req, res) {
+app.post('/answering', function (req, res) {
 
-    notificar(req.body, students);
+    // var pregunta = {
+    //     mensaje: req.body.id,
+    //     alumno: req.body.sender,
+    // };
+
+    //notificar(pregunta, alumnos.concat(profesores));
+});
+
+app.post('/responder', function (req, res) {
+
+    notificar(req.body, alumnos);
     notificarRespuesta(req.body)
     res.send('[Server] Responder ok');
 });
 
 function notificarRespuesta(respuesta){
-    
-        proffesors.forEach(function (notificado) {
-            request.post(
-                'http://localhost:'+notificado+'/recibirRespuesta',
-                { form: {
-                    titulo: respuesta.titulo,
-                    mensaje: respuesta.mensaje,
-                    sender: respuesta.sender,
-                    id:respuesta.id
+
+    profesores.forEach(function (notificado) {
+        request.post(
+            'http://localhost:'+notificado+'/recibirRespuesta',
+            { form: {
+                titulo: respuesta.titulo,
+                mensaje: respuesta.mensaje,
+                sender: respuesta.sender,
+                id:respuesta.id
+            }
+            },
+            function (error, response, body){
+                if (!error && response.statusCode == 200) {
+                    console.log(body)
                 }
-                },
-                function (error, response, body){
-                    if (!error && response.statusCode == 200) {
-                        console.log(body)
-                    }
-                }
-            );
-        })
+            }
+        );
+    })
 }
 
 
-mailingList.post('/registrarse', function (req, res) {
+app.post('/registrarse', function (req, res) {
 
-    if (proffesors.indexOf(req.body.sender)===-1){
-        proffesors.push(req.body.sender);
+    if (profesores.indexOf(req.body.sender)===-1){
+        profesores.push(req.body.sender);
     }
-    console.log(proffesors);
-    res.send('[Server] registrarse');
+    console.log(profesores);
+    res.send('profesor registrado ID: '+req.body.sender);
 });
 
 function notificar (pregunta, notificados) {
@@ -97,21 +111,3 @@ function notificar (pregunta, notificados) {
         );
     })
 }
-
-
-//
-//
-// professorApp.get('/index.html', function (req, res) {
-//     res.sendFile( __dirname + "/" + "index.html" );
-// })
-//
-// professorApp.post('/process_post', urlencodedParser, function (req, res) {
-//
-//     // Prepare output in JSON format
-//     response = {
-//         first_name:req.body.first_name,
-//         last_name:req.body.last_name
-//     };
-//     console.log(response);
-//     res.end(JSON.stringify(response));
-// })

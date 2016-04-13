@@ -6,36 +6,62 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var request = require('request');
-
 //creates student server
 var studentApp = express();
 studentApp.use(bodyParser.urlencoded({ extended: false }));
 
-//listen
-studentApp.listen(8002, function () {
-    console.log('Alumno professorApp listening on port 8082!');
+var prompt = require('prompt');
+
+var requestPromise = require('request-promise');
+
+var questions = [];
+var port;
+
+prompt.start();
+
+prompt.get(['port'], function (err, result) {
+    if (err || !result.port) { return 1; }
+    port = result.port;
+    listening()
 });
 
 
-var questions = [];
 
-//call every 10 seconds
-setInterval(function () {
-    request.post(
-            'http://localhost:8081/preguntar',
-        { form: {
+function listening() {
+    //listen
+    studentApp.listen(port, function () {
+        console.log('Alumno listening on port '+port);
+    });
+
+    setInterval(function () {
+        ask();
+    },10000);
+}
+
+function ask() {
+    console.log('asking..');
+    var options = {
+        method:'POST',
+        uri:'http://localhost:8081/preguntar',
+        form:{
             titulo: 'Titulo test' + Math.floor(Math.random()*10),
             mensaje: 'Mensaje test' + Math.floor(Math.random()*10),
-            sender: 8002
+            sender: port
         }
-        },
-        function (error, response, body){
-            if (!error && response.statusCode == 200) {
-                console.log(body)
-            }
-        }
-    );
-},10000)
+    };
+
+    requestPromise(options)
+        .then(function (result) {
+            //succeeded
+            console.log('succeeded!!')
+        })
+        .catch(function (err) {
+            //post failed
+            console.log(err);
+        });
+}
+
+
 
 studentApp.post('/recibir', function (req, res) {
     questions.push(req.body);
